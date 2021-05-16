@@ -1,0 +1,475 @@
+// Copyright 2021 CipherTrace Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package ciphertrace.singularity.apis.traveler.v1;
+
+import "google/protobuf/any.proto";
+import "apis/traveler/common/v1/errors.proto";
+import "apis/traveler/common/v1/address.proto";
+import "apis/traveler/trisa/v1alpha1/api.proto";
+import "apis/traveler/common/v1/transaction.proto";
+
+
+// The Traveler service implements a one-to-one API between a VASP customer and the
+// CipherTrace TRISA node, which acts as a single point of entry to the TRISA network on
+// behalf of the VASP customer. The Traveler service allows the VASP full access to the
+// TRISA network, both for initiating information exchange requests to other VASPs as
+// the transaction originator and by providing a callback stream to respond as a
+// beneficiary to incoming requests. The service also provides RPCs for VASP address
+// confirmation and health status checks.
+service Traveler {
+    // Initiate TRISA information exchange as an overlay prior to a virtual asset
+    // transfer. The Transfer RPC is flexible: transfer requests are wrappers for
+    // a range of acceptable request types depending on differing amounts of work
+    // handled at the client vs by CipherTrace.
+    rpc Transfer(TransferRequest) returns (TransferReply) {};
+
+    // Designed to facilitate incoming TRISA information exchanges to the VASP customer
+    // from other TRISA member originators. Bidirectional streaming enables the client
+    // to act as a synchronous beneficiary, responding to the originator request as
+    // quickly as possible. Like the TransferRequest, Beneficiary messages are wrappers
+    // for a range of acceptable callback responses depending on differing amounts of
+    // work handled at the client vs by CipherTrace.
+    rpc CallbackStream(stream Beneficiary) returns (stream Callback) {};
+
+    // The Concierge RPC allows Traveler clients to retrieve incoming transfers from
+    // remote originating VASPs asynchronously. The request controls how many messages
+    // are returned and the reply contains zero or more incoming transfers.
+    rpc Concierge(ConciergeRequest) returns (ConciergeReply) {};
+
+    // Used to identify the VASP or VASPs that CipherTrace believes to own the crypto
+    // address. This is a side-channel lookup to retrieve this information without
+    // having to initiate a transfer (though this can also be done automatically in a
+    // transfer using address routing). This RPC is distinct from but often preceeds a
+    // ConfirmAddress request, which is a TRISA network message that establishes
+    // proof-of-control for the crypto address. Both the LookupAddress and
+    // ConfirmAddress RPCs are used to establish a transaction before an identity
+    // exchange to guarantee no PII leakage.
+    rpc LookupAddress(LookupAddressRequest) returns (LookupAddressReply) {};
+
+    // ConfirmAddress implements the TRISA address confirmation protocol which
+    // establishes proof of control by a VASP for a crypto address. This is part of the
+    // TRISA peer-to-peer network and Traveler assists by determining where to route the
+    // request using the same routing fields as in the Transfer RPC. Traveler clients
+    // should also respond to incoming address confirmation requests, which are sent via
+    // the callback stream.
+    rpc ConfirmAddress(ConfirmAddressRequest) returns (ConfirmAddressReply) {};
+
+    // Authenticated liveness and health check unary endpoint so that the VASP client
+    // can maintain long-running streaming channels.
+    rpc Status(StatusRequest) returns (StatusReply) {};
+}
+
+
+// Initiating a TRISA information exchange should be flexible to allow different amounts
+// of work to be done either on the client side or by CipherTrace, depending on the
+// preference of the client. Work involves data handling and encryption as well as
+// beneficiary discovery and routing.
+//
+// Data handling and encryption; client sends:
+// - completely encrypted transaction bundle (presumes client has public keys of beneficiary)
+// - key and encrypted bundle (traveler needs to retrieve public keys of beneficiary and encrypt key+bundle)
+// - entirely unencrypted transaction data (traveler needs to create key and encrypt)
+
+// Discovery and routing; client knows:
+// - the endpoint and public keys of the beneficiary VASP (traveler establishes mTLS and authenticates)
+// - the VASP ID or LEI/common name for a directory service lookup (traveler performs a directory service lookup)
+// - only the crypto address of the beneficiary (traveler performs an internal CipherTrace address lookup)
+message TransferRequest {
+
+    // Specify data handling and encryption workflows.
+    oneof request {
+        // Client sends completely encrypted transaction bundle, using the CipherTrace
+        // TRISA node simply as a passthrough and to establish a trusted connection with
+        // the beneficiary VASP. The traveler endpoint performs no encryption.
+        Passthrough passthrough = 1;
+
+        // Client sends encrypted transaction bundle and key. The CipherTrace TRISA node
+        // encrypts and signs the key with the public key of the beneficiary.
+        Cipher cipher = 2;
+
+        // Client sends required compliance information, CipherTrace handles all
+        // encryption.
+        Information information = 3;
+    }
+
+    // Specify discovery and routing workflows.
+    oneof routing {
+        // Client knows the TRISA endpoint of the beneficiary VASP.
+        string endpoint = 4;
+
+        // Client knows the VASP ID or LEI/common name for directory service lookup.
+        string vasp = 5;
+
+        // Client only knows the crypto address for a CipherTrace address lookup. The
+        // client must send the crypto_address and network fields, and optionally the
+        // asset_type field. All other fields are not required.
+        traveler.common.v1.CryptoAddress crypto_address = 6;
+    }
+
+}
+
+// A Passthrough allows the client to handle most of the TRISA workflow. For v1, the
+// Passthrough is just the transaction bundle, but it is wrapped in its own message so
+// that future versions can add traveler-specific handling fields if necessary.
+message Passthrough {
+    trisa.v1alpha1.SecureEnvelope envelope = 1;
+}
+
+// Cipher requests allow the client to perform their own key management, but must send
+// the CipherTrace Traveler node the symmetric key and hmac secret used to encrypt and
+// sign the payload blob. The Traveler node will maintain the public keys of the
+// beneficiary VASPs and will create a correct transaction envelope on behalf of the
+// traveler client to send to the beneficiary.
+message Cipher {
+    // The envelope.encryption_key and envelope.hmac_secret fields should be empty.
+    // They will be populated by the CipherTrace Traveler node, which will encrypt the
+    // originator_payload_symmetric_key and originator_hmac_secret with the public
+    // key of the beneficiary.
+    trisa.v1alpha1.SecureEnvelope envelope = 1;
+
+    // The symmetric key generated by the client and used to encrypt the payload
+    // data in the payload field. The key should be in the clear or encrypted using
+    // the traveler node public key so that it can be encrypted using the beneficiary
+    // public key. In the case of a Callback, this field wil be empty.
+    bytes originator_payload_symmetric_key = 2;
+
+    // The HMAC secret used to calculate the HMAC signature of the payload. This
+    // secret should be in the clear or encrypted using the traveler node public key so
+    // that it can be encrypted using the beneficiary public key. In the case of a
+    // Callback, this field will be empty.
+    bytes originator_hmac_secret = 3;
+}
+
+// An Information request requires the CipherTrace TRISA node to handle all encryption
+// and create a correct transaction bundle from the identity and transaction-specific
+// information. This message is purposefully distinct from trisa Payload for
+// compatibility and version flexibility. "Information" here refers to the information
+// in "Travel Rule Information Sharing Alliance".
+message Information {
+    // Must contain a valid identity structure (IVMS-101 preferred) that identifies the
+    // originator of the transaction for compliance purposes.
+    google.protobuf.Any identity = 1;
+
+    // Contains network specific data to facilitate the transaction, including the
+    // beneficiary information so that the beneficiary VASP can respond correctly. May
+    // also include other fields such as source and amount.
+    google.protobuf.Any transaction = 2;
+}
+
+// The TransferReply returns the Transaction bundle for both the originator and the
+// beneficiary to ensure that the client has a complete record of the transaction. In
+// the case of the passthrough request, the originator transaction remains unmodified.
+// However in the case of Cipher and Information requests, the
+// originator_payload_symmetric_key is encrypted using the public key of the
+// originator, not the beneficiary so that the originating VASP can read the key for
+// compliance purposes.
+message TransferReply {
+    // Data handling and encryption workflow matches transfer request.
+    oneof reply {
+        // If a passthrough request was received, a passthrough response is returned.
+        Passthrough passthrough = 1;
+
+        // If a cipher request is received, Traveler decrypts the key and secret and
+        // sends a cipher response whose payload can be decrypted by the client.
+        Cipher cipher = 2;
+
+        // If an information request is received, Traveler sends back the information
+        // unless it is stored via the Sunrise app, then a sunrise reply is returned.
+        Information information = 3;
+
+        // Confirmation receipt from the Sunrise application if the request has been
+        // stored for asynchronous delivery via a non-TRISA protocol. The Sunrise flag
+        // will be set to true and no TRISA metadata will be available in this case.
+        traveler.common.v1.ConfirmationReceipt sunrise = 4;
+    }
+
+    // Traveler Handling Details and TRISA metadata
+    message TRISAMeta {
+        string envelope_id = 1;
+        string vasp_id = 2;
+        string vasp_directory = 3;
+        string vasp_name = 4;
+        string trisa_endpoint = 5;
+        int64 latency = 6;
+    }
+
+    TRISAMeta metadata = 10;
+    traveler.common.v1.CryptoAddress resolved_address = 11;
+    bool forwarding_sunrise = 12;
+}
+
+// Callback messages are from the CipherTrace TRISA node to the client on the
+// CallbackStream, and contain a request for action usually in response to an incoming
+// request from another TRISA member VASP. The Callback message contains a unique ID
+// that the client must respond with, to ensure that the beneficary reponse is matched
+// to the callback.
+message Callback {
+    // A unique identifier for the callback generated by the CipherTrace TRISA node. Any
+    // beneficiary response to the callback must carry the same identifier.
+    string id = 1;
+
+    oneof request {
+        // Client sends completely encrypted transaction bundle, using the CipherTrace
+        // TRISA node simply as a passthrough and to establish a trusted connection with
+        // the beneficiary VASP. The traveler endpoint performs no encryption.
+        Passthrough passthrough = 2;
+
+        // Client sends encrypted transaction bundle and key. The CipherTrace TRISA node
+        // encrypts and signs the key with the public key of the beneficiary.
+        Cipher cipher = 3;
+
+        // Client sends required compliance information, Traveler handles cryptography.
+        Information information = 4;
+
+        // Contains a address confirmation request (proof-of-control)
+        ConfirmAddressRequest address = 5;
+
+        // Contains a key-echange request (if in passthrough-mode)
+        trisa.v1alpha1.SigningKey key_exchange = 6;
+    }
+}
+
+
+// Beneficiary messages wrap a response from the client to a TRISA request from another
+// TRISA member VASP to handle a Callback on the CallbackStream. The client must send
+// the callback identifier and can also send an error if the request cannot be handled.
+// Like the TransferRequest, the beneficiary response can specify different data
+// handling mechanisms at the CipherTrace TRISA node. Additionally, the Beneficiary can
+// respond to an address confirmation request.
+message Beneficiary {
+    // The unique identifier of the callback (required except for stream info messages)
+    string id = 1;
+
+    // Any client-side error that doesn't allow the callback to be fulfilled (optional)
+    // This error is returned in the Beneficiary message so that the stream doesn't
+    // close, the client should handle the error and continue to respond to messages.
+    traveler.common.v1.Error error = 2;
+
+    // Specify data handling and encryption workflow.
+    // See the TransferRequest for more detail.
+    oneof response {
+        // Unique to the Beneficiary message; used to initialize a stream and provide
+        // traveler-side stream handling information on the stream. This type of message
+        // should be the first message sent from the client and the stream will not be
+        // usable until the message is received.
+        Stream stream = 3;
+
+        // Callback response messages.
+        Passthrough passthrough = 4;
+        Cipher cipher = 5;
+        Information information = 6;
+
+        // Unique to the Beneficiary message; a response to an address confirmation
+        // request (proof-of-control) from a TRISA member VASP.
+        trisa.v1alpha1.AddressConfirmation address = 7;
+
+        // Unique to the Beneficary message; a response to a key exchange request from
+        // a TRISA member VASP. These messages will only be sent when the stream is in
+        // Passthrough mode, otherwise the Traveler node will perform the cryptography
+        // and respond on behalf of the client.
+        trisa.v1alpha1.SigningKey key_exchange = 8;
+    }
+}
+
+// When the client opens a CallbackStream they must send a beneficiary message with the
+// stream handling details. These options specify how to handle requests on the stream
+// and what to do in the case of multiple streams. Note that an error occurs if multiple
+// streams are opened with conflicting options.
+message Stream {
+    enum StreamMode {
+        PASSTHROUGH = 0;
+        CIPHER = 1;
+        INFORMATION = 2;
+    }
+
+    enum MultiStream {
+        REJECT = 0;     // Reject any additional streams that are opened if a stream is already open
+        CLOSE = 1;      // Close any prior streams and only maintain the latest stream
+        UNICAST = 2;    // Only send to one stream (selected by the traveler service)
+        BROADCAST = 3;  // Send the message to all open client streams, first response wins
+        BALANCING = 4;  // Round-robin which streams get sent messages
+    }
+
+    // A unique ID for the stream - if this ID already exists in Traveler, only a single
+    // stream will be kept based on the multi-stream mode. E.g. If reject, the stream
+    // open request will error, otherwise the original stream will be closed in favor
+    // of the later one.
+    string stream_id = 1;
+
+    // How the client expects to receive beneficiary messages on this stream. Defines
+    // the amount of work that Traveler does on behalf of the client.
+    StreamMode stream_mode = 2;
+
+    // How traveler should handle multiple unique streams.
+    MultiStream on_multiple_streams = 3;
+}
+
+// A request to retrieve all incoming transfers since the last concierge request.
+message ConciergeRequest {
+    int32 limit = 1;        // Maximum number of messages to download at a time; if negative - all messages are returned
+
+    bool archives = 2;      // Return archived transfers in addition to new transfers
+    string since = 3;       // Return all transfers created after the specified date (RFC 3339 format)
+    bool reverse = 4;       // Results are returned in time descending order (latest first), specify true to return in time ascending (earliest first)
+
+    bool force_delete = 5;  // Ensure messages are deleted upon retrieval (otherwise will be archived)
+}
+
+// All incoming transfers from remote originating VASPs that meet the requirements from
+// the request. The Traveler client is the beneficiary of these transfers.
+message ConciergeReply {
+    repeated IncomingMessage messages = 1;
+
+    // Number of messages archived vs deleted
+    int32 archived = 2;
+    int32 deleted = 3;
+}
+
+message IncomingMessage {
+    // The unique message ID either from the remote beneficiary VASP or generated by
+    // Traveler to identify the incoming transfer.
+    string message_id = 1;
+
+    oneof message {
+        // Client sends completely encrypted transaction bundle, using the CipherTrace
+        // TRISA node simply as a passthrough and to establish a trusted connection with
+        // the beneficiary VASP. The traveler endpoint performs no encryption.
+        Passthrough passthrough = 2;
+
+        // Client sends encrypted transaction bundle and key. The CipherTrace TRISA node
+        // encrypts and signs the key with the public key of the beneficiary.
+        Cipher cipher = 3;
+
+        // Client sends required compliance information, Traveler handles cryptography.
+        Information information = 4;
+
+        // Contains a address confirmation request (proof-of-control)
+        ConfirmAddressRequest address = 5;
+
+        // Contains a key-echange request (if in passthrough-mode)
+        trisa.v1alpha1.SigningKey key_exchange = 6;
+    }
+
+    // TRISA meta information
+    string received_at = 7;        // Timestamp the TRISA transaction was received
+    bool confirmation_receipt = 8;  // If a confirmation receipt was sent to originator (otherwise an error was sent)
+    bool response_required = 9;     // Is beneficiary information required from the Traveler client?
+}
+
+// Lookup one or more crypto addresses for CipherTrace identification of the VASP that
+// owns the address. Only the crypto_address and network fields are required, asset_type
+// is optional, and all other fields will be populated in the return message.
+message LookupAddressRequest{
+    repeated traveler.common.v1.CryptoAddress addresses = 1;
+}
+
+// If the requested crypto addresses can be associated with a VASP(s), they are returned
+// with the missing address information populated. Addresses are processed independently
+// so that if an address can't be found or there is some other error, it populated in
+// the same index in the errors array (otherwise nil). The addresses and errors arrays
+// are guaranteed to be in the same order, but not necessarily in the same order as the
+// request address array. Duplicate addresses may be removed from the response.
+message LookupAddressReply{
+    // Lookup response
+    repeated traveler.common.v1.CryptoAddress addresses = 1;
+    repeated traveler.common.v1.Error errors = 2;
+
+    // Lookup metadata
+    int32 n_requested = 3;
+    int32 n_found = 4;
+    int32 n_errored = 5;
+}
+
+// Initiate address confirmation (proof-of-control) through the TRISA network. Note that
+// these types of requests could be used to populate the CipherTrace database in an
+// opt-in fashion with clients. To conduct this request through Traveler, the client
+// only has to specify the address confirmation requests as well as some routing
+// information about where to direct the request. Even if CipherTrace returns a VASP
+// lookup the address confirmation proceeds through the TRISA protocol.
+//
+// Note that the TRISA address confirmation protocol hasn't been fully implemented yet,
+// however, this information should be sufficient for the traveler service to conduct
+// the request correctly.
+message ConfirmAddressRequest{
+    // The TRISA confirm address request
+    trisa.v1alpha1.Address address = 1;
+
+    // Determine where to send the confirm address request.
+    // If none of these fields are populated, an address lookup is conducted on each of
+    // the crypto_addresses and an error is returned if multiple VASPs are identified.
+    oneof routing {
+        // Client knows the TRISA endpoint of the beneficiary VASP.
+        string endpoint = 2;
+
+        // Client knows the VASP ID or LEI/common name for directory service lookup.
+        string vasp = 3;
+
+        // Client only knows a crypto address, perform a lookup before sending an
+        // address confirmation, this is a shortcut to skip the LookupAddress before
+        // performing an address confirmation.
+        traveler.common.v1.CryptoAddress crypto_address = 4;
+    }
+}
+
+// TODO: the address confirmation protocol needs to be implemented in order to fully
+// identify what fields may come back from the TRISA request.
+message ConfirmAddressReply{
+    // Address confirmation information for each address requested
+    trisa.v1alpha1.AddressConfirmation confirmation = 1;
+}
+
+// The Status endpoint is designed for VASP developers to maintain their callback stream
+// connections via automated checks, but they can also get more detailed information
+// about the service history from Prometheus/Grafana.
+message StatusRequest{
+    // Uptime/health check only to reduce server processing for stream info.
+    bool no_stream_info = 1;
+    bool no_concierge_info = 2;
+    bool no_sunrise_info = 3;
+}
+
+// A status reply provides side-channel information about the state of the traveler
+// service and its current interactions with client service implementations,
+// specifically to manage long-running callback streams.
+message StatusReply{
+    message StreamInfo {
+        // Unique information identifying the stream.
+        Stream stream = 1;
+
+        // How long the stream has been connected.
+        string uptime = 2;
+
+        // Number of callbacks completed and pending.
+        uint64 completed = 3;
+        uint64 pending = 4;
+    }
+
+    // Traveler service health and information.
+    string health = 1;
+    string timestamp = 2;
+    string version = 3;
+
+    // Stream-specific information. Note if a stream does not appear in the list of
+    // streams it is likely that it is has not been initialied yet (or correctly).
+    repeated StreamInfo streams = 4;
+
+    // Number of incoming messages to retrieve. If negative, number of messages wasn't queried.
+    int64 incoming_messages = 5;
+
+    // Number of outgoing messages awaiting sunrise response.
+    int64 outgoing_messages = 6;
+}

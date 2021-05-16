@@ -1,0 +1,43 @@
+// Copyright 2021 CipherTrace Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package ciphertrace.singularity.apis.traveler.common.v1;
+
+// Describes a crypto address both in terms of blockchain and VASP network information
+// as well as TRISA routing information. This is a common data structure as its used by
+// directly by Traveler as well as in other address resolution services.
+message CryptoAddress {
+    // The crypto address being described - required
+    string crypto_address = 1;
+
+    // Describes the VASP and network, usually required for lookups
+    string network = 2;
+    string asset_type = 3;
+    string owner_name = 4;
+    string owner_url = 5;
+    string owner_country = 6;
+    string owner_type = 7;
+
+    // Labels is JSON data and should be parsed as such
+    bytes labels = 10;
+
+    // Describes the TRISA-specific information about an address that belongs to a
+    // registered VASP, usually returned after lookups
+    string vasp_id = 11;
+    string registered_directory = 12;
+    string common_name = 13;
+    string endpoint = 14;
+}

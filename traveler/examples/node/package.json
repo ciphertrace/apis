@@ -1,0 +1,23 @@
+{
+  "name": "ct-traveler-api-examples",
+  "version": "0.1.0",
+  "scripts": {
+    "lookup": "node -r dotenv/config lookup.js dotenv_config_path=../../.env"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.1.0",
+    "@grpc/proto-loader": "^0.5.0",
+    "async": "^1.5.2",
+    "axios": "^0.21.1",
+    "client-oauth2": "^4.3.3",
+    "dotenv": "^8.6.0",
+    "google-protobuf": "^3.0.0",
+    "lodash": "^4.6.1",
+    "minimist": "^1.2.0",
+    "node-rsa": "^1.1.1",
+    "openid-client": "^4.7.2",
+    "path": "^0.12.7",
+    "qs": "^6.10.1",
+    "xlsx": "^0.16.9"
+  }
+}

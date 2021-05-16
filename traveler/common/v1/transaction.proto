@@ -1,0 +1,41 @@
+// Copyright 2021 CipherTrace Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package ciphertrace.singularity.apis.traveler.common.v1;
+
+
+// Simple transaction data struct for testing purposes
+message Transaction {
+    string originator = 1;        // crypto address of the originator
+    string beneficiary = 2;       // crypto address of the beneficiary
+    double amount = 3;            // amount of the transaction
+    string network = 4;           // the network of the transaction
+    string asset_type = 5;        // the type of virtual asset being transfered
+}
+
+// A confirmation receipt that is sent to remote originator VASP (a TRISA member) on
+// behalf of the Traveler client to indicate that the travel rule compliance information
+// has been successfully received. Also used to provide token information to share with
+// a remote beneficiary (a non-TRISA member) to support Sunrise travel rule exchange.
+message ConfirmationReceipt {
+    string receipt_id = 1;        // The receipt_id is required to lookup the incoming_message to verify it in the future
+    string token = 2;             // The token used to authenticate
+    string confirmation_url = 3;  // A URL (in the Sunrise app?) to confirm receipt of the transaction.
+    string message = 4;           // An standard message that the Traveler client wants to send
+    string received_at = 5;       // The timestamp the confirmation was received at
+    string received_by = 6;       // Some client-specific string that identifies Traveler/the Traveler client
+    bool response_required = 7;   // If the type of message requires a response eventually
+}

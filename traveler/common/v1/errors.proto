@@ -1,0 +1,33 @@
+// Copyright 2021 CipherTrace Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package ciphertrace.singularity.apis.traveler.common.v1;
+
+import "apis/traveler/trisa/v1alpha1/errors.proto";
+
+// Common error message definition for all packages. This message is a generic wrapper
+// for any traveler error and package specific codes. It may contain a TRISA network
+// error if the error is being forwarded. The error may be returned as part of the
+// details of a status error in a unary RPC or it may be embedded into a streaming
+// message so that the stream does not close.
+message Error {
+    // Error code and message may be from the Traveler service or may be a TRISA error code
+    int32 code = 1;
+    string message = 2;
+
+    // If the error is a TRISA network error (as opposed to a Traveler error)
+    trisa.v1alpha1.Error trisa = 3;
+}
