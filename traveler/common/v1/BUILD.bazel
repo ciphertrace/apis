@@ -1,0 +1,12 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "common_proto",
+    srcs = [
+        "address.proto",
+        "errors.proto",
+        "transaction.proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = ["//traveler/trisa/v1alpha1:trisa_proto"],
+)
