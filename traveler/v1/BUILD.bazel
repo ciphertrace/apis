@@ -1,0 +1,12 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "traveler_proto",
+    srcs = ["api.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//traveler/common/v1:common_proto",
+        "//traveler/trisa/v1alpha1:trisa_proto",
+        "@com_google_protobuf//:any_proto",
+    ],
+)
