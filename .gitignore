@@ -1,3 +1,9 @@
+# Bazel symlinks
+/bazel-apis
+/bazel-bin
+/bazel-out
+/bazel-testlogs
+
 .idea/
 node_modules/
 credentials.json
