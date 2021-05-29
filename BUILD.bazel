@@ -8,3 +8,16 @@ buildifier(
     name = "buildifier_check",
     mode = "check",
 )
+
+proto_library(
+    name = "trisacrypto_trisa_api_v1beta1_proto",
+    srcs = [
+        "trisacrypto/trisa/api/v1beta1/api.proto",
+        "trisacrypto/trisa/api/v1beta1/errors.proto",
+    ],
+    deps = [
+        "@com_google_protobuf//:any_proto",
+    ],
+    strip_import_prefix = "trisacrypto",
+    visibility = ["//visibility:public"],
+)
