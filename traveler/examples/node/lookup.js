@@ -20,10 +20,10 @@ const qs = require('qs');
 const pathLib = require("path");
 
 // Root path from where the proto files are referenced
-const ROOT_PROTO_PATH = process.env.ROOT_PROTO_PATH || pathLib.join(__dirname, "/../../../..");
+const ROOT_PROTO_PATH = process.env.ROOT_PROTO_PATH || pathLib.join(__dirname, "/../../..");
 
 // Configuration - Set path to Traveler api.proto file
-const TRAVELER_PROTO_PATH = process.env.TRAVELER_PROTO_PATH || pathLib.join(ROOT_PROTO_PATH, "/apis/traveler/v1/api.proto");
+const TRAVELER_PROTO_PATH = process.env.TRAVELER_PROTO_PATH || pathLib.join(ROOT_PROTO_PATH, "/traveler/v1/api.proto");
 const AUTH_DATA = process.env.AUTH_DATA || '../credentials.json'; // Local credentials file with SECRET and CLIENT_ID
 const TRAVELER_ENDPOINT = process.env.TRAVELER_ENDPOINT || 'grpc.a639386.traveler.stage.cipheruse.com:443'; // CipherTrace Test
 
@@ -36,12 +36,12 @@ const packageDefinition = protoLoader.loadSync(
     enums: String,
     defaults: true,
     oneofs: true,
-    includeDirs: [ROOT_PROTO_PATH]
+    includeDirs: [ROOT_PROTO_PATH, pathLib.join(ROOT_PROTO_PATH, "/trisacrypto")]
   }
 );
 
 // Load the Traveler service package stub
-const pb = grpc.loadPackageDefinition(packageDefinition).ciphertrace.singularity.apis.traveler.v1;
+const pb = grpc.loadPackageDefinition(packageDefinition).ciphertrace.apis.traveler.v1;
 
 // Load the authentication json file
 const rawData = fs.readFileSync(AUTH_DATA);

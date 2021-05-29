@@ -8,5 +8,7 @@ proto_library(
         "transaction.proto",
     ],
     visibility = ["//visibility:public"],
-    deps = ["//traveler/trisa/v1alpha1:trisa_proto"],
+    deps = [
+        "//:trisacrypto_trisa_api_v1beta1_proto",
+    ],
 )

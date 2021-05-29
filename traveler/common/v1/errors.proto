@@ -14,9 +14,9 @@
 
 syntax = "proto3";
 
-package ciphertrace.singularity.apis.traveler.common.v1;
+package ciphertrace.apis.traveler.common.v1;
 
-import "traveler/trisa/v1alpha1/errors.proto";
+import "trisa/api/v1beta1/errors.proto";
 
 // Common error message definition for all packages. This message is a generic wrapper
 // for any traveler error and package specific codes. It may contain a TRISA network
@@ -29,5 +29,5 @@ message Error {
     string message = 2;
 
     // If the error is a TRISA network error (as opposed to a Traveler error)
-    trisa.v1alpha1.Error trisa = 3;
+    trisa.api.v1beta1.Error trisa = 3;
 }

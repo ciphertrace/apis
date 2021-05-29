@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package ciphertrace.singularity.apis.traveler.common.v1;
+package ciphertrace.apis.traveler.common.v1;
 
 // Describes a crypto address both in terms of blockchain and VASP network information
 // as well as TRISA routing information. This is a common data structure as its used by

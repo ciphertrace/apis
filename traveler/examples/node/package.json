@@ -2,7 +2,7 @@
   "name": "ct-traveler-api-examples",
   "version": "0.1.0",
   "scripts": {
-    "lookup": "node -r dotenv/config lookup.js dotenv_config_path=../../.env"
+    "lookup": "node -r dotenv/config lookup.js dotenv_config_path=../.env"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.1.0",
