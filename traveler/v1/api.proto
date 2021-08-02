@@ -68,6 +68,10 @@ service Traveler {
     // the callback stream.
     rpc ConfirmAddress(ConfirmAddressRequest) returns (ConfirmAddressReply) {};
 
+    // Settings allows the client to view or update the optional settings and policies
+    // for how Traveler responds to TRISA or Concierge requests.
+    rpc Settings(SettingsRequest) returns (SettingsReply) {};
+
     // Authenticated liveness and health check unary endpoint so that the VASP client
     // can maintain long-running streaming channels.
     rpc Status(StatusRequest) returns (StatusReply) {};
@@ -430,6 +434,55 @@ message ConfirmAddressRequest{
 message ConfirmAddressReply{
     // Address confirmation information for each address requested
     trisa.api.v1beta1.AddressConfirmation confirmation = 1;
+}
+
+// Settings defines the possible polices or options that can be configured by the
+// client. Changing these settings adapts how Traveler responds to TRISA requests and
+// handles the Concierge and Sunrise components on behalf of the client.
+message Settings {
+    // The name of the Traveler node which may be used to informally identify the client in a TRISA request.
+    // Default: "CipherTrace Traveler"
+    string name = 1;
+
+    // Confirmation message attached to a confirmation receipt that is sent back to the
+    // originator TRISA VASP when Traveler is operating asynchronously (e.g. storing
+    // Concierge messages). By default this message identifies that the TRISA envelope
+    // is being stored on behalf of the client until they can take compliance action.
+    string confirm_message = 2;
+
+    // A confirmation message that is sent back to the Traveler client (you) when the
+    // beneficiary VASP is not a TRISA member and the Sunrise application is engaged.
+    // By default this message reminds the user what the Sunrise application does.
+    string sunrise_message = 3;
+
+    // In async mode, specify how to store Concierge messages; e.g. in information,
+    // cipher, or passthrough mode. This will determine how much error handling Traveler
+    // performs before sending a message back to the originator VASP. E.g. in information
+    // mode, Traveler will attempt to decrypt the message to ensure it is valid, sending
+    // any rejection or error messages back to the user. In passthrough mode, Traveler
+    // will perform no handling or validation of the message.
+    //
+    // Valid values: "passthrough", "cipher", "information".
+    string concierge_policy = 4;
+}
+
+// Send an empty settings request to simply view the current settings. If updates are
+// specified, then Traveler will update only the settings that have non-zero values. If
+// reset defaults is true, then Traveler will reset to the default values then apply the
+// specified updates.
+message SettingsRequest{
+    Settings updates = 1;
+    bool reset_defaults = 2;
+}
+
+// The current settings are always returned from a Settings request. If any updates were
+// made that changed the configured value of the setting, then those setting names are
+// returned in the updated array. If an update was sent that does not change the value
+// of the setting, then it is omitted from the array.
+message SettingsReply{
+    Settings settings = 1;
+    repeated string updated = 2;
+    string last_modified = 3;
 }
 
 // The Status endpoint is designed for VASP developers to maintain their callback stream
