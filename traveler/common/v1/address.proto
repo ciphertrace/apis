@@ -23,8 +23,10 @@ message CryptoAddress {
     // The crypto address being described - required
     string crypto_address = 1;
 
-    // Describes the VASP and network, usually required for lookups
+    // The network the crypto address belongs to - required for lookups
     string network = 2;
+
+    // Describes the VASP and network, not required as input, returned as output
     string asset_type = 3;
     string owner_name = 4;
     string owner_url = 5;

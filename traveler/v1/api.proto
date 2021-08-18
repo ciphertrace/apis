@@ -60,6 +60,14 @@ service Traveler {
     // exchange to guarantee no PII leakage.
     rpc LookupAddress(LookupAddressRequest) returns (LookupAddressReply) {};
 
+    // KeyExchange implements the TRISA key exchange protocol to better enable
+    // Passthrough messages. In Passthrough mode the Traveler client is required to
+    // perform all envelope cryptography including asymetric cryptography that allows
+    // only the receipient of the envelope to read the message. KeyExchange allows the
+    // Traveler client to collect the public key from the recipient or the directory
+    // service without having to use the TRISA protocol directly.
+    rpc KeyExchange(KeyExchangeRequest) returns (KeyExchangeReply) {};
+
     // ConfirmAddress implements the TRISA address confirmation protocol which
     // establishes proof of control by a VASP for a crypto address. This is part of the
     // TRISA peer-to-peer network and Traveler assists by determining where to route the
@@ -396,6 +404,51 @@ message LookupAddressReply{
     int32 n_requested = 3;
     int32 n_found = 4;
     int32 n_errored = 5;
+}
+
+// Initiate key exchange through the TRISA network. This message request type is
+// important for Traveler clients engaged in Passthrough transfers so they can collect
+// the key material required to construct passthrough messages.
+message KeyExchangeRequest{
+    // Specify a mechanism to identify the VASP to perform the key exchange with or to
+    // lookup the VASP in the TRISA Directory Service.
+    oneof routing {
+        // Client knows the TRISA endpoint of the beneficiary VASP.
+        string endpoint = 1;
+
+        // Client knows the VASP ID or common name for directory service lookup.
+        string vasp_lookup = 2;
+
+        // Client knows the VASP legal or trading name for directory service search.
+        string vasp_search = 3;
+    }
+
+    // Optional - signing key to send to beneficiary VASP for them to seal envelopes
+    // sent in reply. If no signing_key is specified, Traveler will exchange the public
+    // key that has been set via the Settings RPC.
+    trisa.api.v1beta1.SigningKey signing_key = 4;
+
+    // If true, instead of performing direct key exchange with the beneficiary VASP,
+    // Traveler will simply return the public keys from the directory service. This is
+    // useful if the beneficiary VASP is unavailable.
+    bool use_directory_keys = 5;
+}
+
+// If a successful key exchange happens the primary item that's returned is the public
+// key material along with information about the remote VASP for managing keys.
+message KeyExchangeReply{
+    // The signing key that should be used for sealing envelopes sent to the remote.
+    trisa.api.v1beta1.SigningKey signing_key = 1;
+
+    // Directory service information about the remote VASP.
+    string vasp_id = 2;
+    string registered_directory = 3;
+    string common_name = 4;
+    string trisa_endpoint = 5;
+
+    // Set to true if the keys were retrieved from the directory service and not
+    // directly from the remote VASP.
+    bool retrieved_from_directory = 6;
 }
 
 // Initiate address confirmation (proof-of-control) through the TRISA network. Note that
