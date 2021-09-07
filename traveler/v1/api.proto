@@ -80,6 +80,10 @@ service Traveler {
     // for how Traveler responds to TRISA or Concierge requests.
     rpc Settings(SettingsRequest) returns (SettingsReply) {};
 
+    // ManageSigningKeys allows the client to upload or download public signing keys for
+    // use in Passthrough mode in coordination with the Settings RPC.
+    rpc ManageSigningKeys(ManageSigningKeysRequest) returns (ManageSigningKeysReply) {};
+
     // Authenticated liveness and health check unary endpoint so that the VASP client
     // can maintain long-running streaming channels.
     rpc Status(StatusRequest) returns (StatusReply) {};
@@ -517,6 +521,17 @@ message Settings {
     //
     // Valid values: "passthrough", "cipher", "information".
     string concierge_policy = 4;
+
+    // The name or ID of the currently assigned signing key if concierge policy is
+    // passthrough. If the current concierge policy is not passthrough but a current
+    // signing key is assigned the name or ID of the key is surrounded by parentheses
+    // to indicate that it is not being used.
+    // Specify "default" to reset the signing key to the default key used by Traveler.
+    string current_signing_key = 5;
+
+    // A list of the names of all available signing keys uploaded to Traveler.
+    // This field is read-only and will be ignored in SettingsRequest.
+    repeated string signing_keys = 6;
 }
 
 // Send an empty settings request to simply view the current settings. If updates are
@@ -536,6 +551,46 @@ message SettingsReply{
     Settings settings = 1;
     repeated string updated = 2;
     string last_modified = 3;
+}
+
+// The ManageSigningKeys endpoint is used to both upload and download signing keys to
+// be stored with the Traveler node for responding to key exchange requests in concierge
+// mode when the concierge policy is passthrough. The ManageSigningKeysRequest has two
+// modes: download mode when only a title is specified and no signing key and upload
+// mode when the signing key is specified. In upload mode, the uploaded key will be set
+// to the current signing key unless otherwise specified.
+message ManageSigningKeysRequest {
+    // If only the title is specified and no signing key, then the Traveler node will
+    // return the signing key data for the given title (e.g. download mode).
+    // When a signing key is specified in the request (e.g. upload mode) then the title
+    // is optional, you can specify a unique title for the key or the key's subject
+    // will be used as the title. Note that "default" is a reserved title.
+    string title = 1;
+
+    // The key to upload to the Traveler node. If omitted, then Traveler will return
+    // the key specified by the title in download mode. If a Certificate PEM is uploaded
+    // in the data field of the SigningKey then the other keys will be parsed
+    // automatically unless any of the fields have already been set.
+    trisa.api.v1beta1.SigningKey signing_key = 2;
+
+    // If true, an uploaded key will not be set as the current signing key.
+    // Ignored in download mode.
+    bool not_current_key = 3;
+}
+
+message ManageSigningKeysReply {
+    // The mode that Traveler handled the manage keys request
+    string mode = 1;
+
+    // Meta data about the signing key
+    string title = 2;
+    string key_type = 3;
+    bool current_signing_key = 4;
+    string created = 13;
+    string last_modified = 14;
+
+    // The parsed/downloaded signing key from the server.
+    trisa.api.v1beta1.SigningKey signing_key = 15;
 }
 
 // The Status endpoint is designed for VASP developers to maintain their callback stream
