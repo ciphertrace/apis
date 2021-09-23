@@ -136,6 +136,9 @@ message TransferRequest {
         traveler.common.v1.CryptoAddress crypto_address = 6;
     }
 
+    // If the Transfer will become a Sunrise request, optionally supply a contact email
+    // for the Sunrise workflow to verify and validate the recipient.
+    string contact_email = 7;
 }
 
 // A Passthrough allows the client to handle most of the TRISA workflow. For v1, the
