@@ -16,7 +16,6 @@ syntax = "proto3";
 
 package ciphertrace.apis.traveler.common.v1;
 
-
 // Simple transaction data struct for testing purposes
 message Transaction {
     string originator = 1;        // crypto address of the originator
@@ -32,7 +31,7 @@ message Transaction {
 // a remote beneficiary (a non-TRISA member) to support Sunrise travel rule exchange.
 message ConfirmationReceipt {
     string receipt_id = 1;        // The receipt_id is required to lookup the incoming_message to verify it in the future
-    string token = 2;             // The token used to authenticate
+    string token = 2;             // Unused - deprecated in favor of the sunrise workflow
     string confirmation_url = 3;  // A URL (in the Sunrise app?) to confirm receipt of the transaction.
     string message = 4;           // An standard message that the Traveler client wants to send
     string received_at = 5;       // The timestamp the confirmation was received at
