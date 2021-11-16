@@ -21,6 +21,7 @@ import "traveler/common/v1/address.proto";
 import "traveler/common/v1/errors.proto";
 import "traveler/common/v1/transaction.proto";
 import "trisa/api/v1beta1/api.proto";
+import "trisa/api/v1beta1/errors.proto";
 
 
 // The Traveler service implements a one-to-one API between a VASP customer and the
@@ -273,10 +274,15 @@ message Beneficiary {
     // The unique identifier of the callback (required except for stream info messages)
     string id = 1;
 
-    // Any client-side error that doesn't allow the callback to be fulfilled (optional)
-    // This error is returned in the Beneficiary message so that the stream doesn't
-    // close, the client should handle the error and continue to respond to messages.
-    traveler.common.v1.Error error = 2;
+    // This error field is deprecated as it is the wrong error type for TRISA error
+    // responses. Please use the trisa.api.v1beta1.Error in field 9 instead.
+    reserved 2;
+
+    // If the beneficiary needs to respond to the TRISA request with an error instead
+    // of a response, they should supply the error here. The TRISA error is parsed and
+    // sent as an error to the originator without closing the stream, allowing the
+    // client to continue to respond to callback requests.
+    trisa.api.v1beta1.Error error = 9;
 
     // Specify data handling and encryption workflow.
     // See the TransferRequest for more detail.
