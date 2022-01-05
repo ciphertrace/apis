@@ -140,6 +140,11 @@ message TransferRequest {
     // If the Transfer will become a Sunrise request, optionally supply a contact email
     // for the Sunrise workflow to verify and validate the recipient.
     string contact_email = 7;
+
+    // If sending a transfer as an asynchronous response to a previous TRISA message or
+    // to update information from a previous transaction, specify the envelope ID of the
+    // TRISA message exchange.
+    string envelope_id = 8;
 }
 
 // A Passthrough allows the client to handle most of the TRISA workflow. For v1, the
