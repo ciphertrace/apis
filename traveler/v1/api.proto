@@ -22,6 +22,7 @@ import "traveler/common/v1/errors.proto";
 import "traveler/common/v1/transaction.proto";
 import "trisa/api/v1beta1/api.proto";
 import "trisa/api/v1beta1/errors.proto";
+import "trisa/data/generic/v1beta1/transaction.proto";
 
 
 // The Traveler service implements a one-to-one API between a VASP customer and the
@@ -223,6 +224,7 @@ message TransferReply {
     }
 
     // Traveler Handling Details and TRISA metadata
+    // NOTE: this message is deprecated, please use TRISAINfo instead.
     message TRISAMeta {
         string envelope_id = 1;
         string vasp_id = 2;
@@ -232,9 +234,13 @@ message TransferReply {
         int64 latency = 6;
     }
 
-    TRISAMeta metadata = 10;
+    // NOTE: this field is deprecated, please use trisa_info instead.
+    TRISAMeta metadata = 10 [deprecated = true];
+
+    // Request handling information
     traveler.common.v1.CryptoAddress resolved_address = 11;
     bool forwarding_sunrise = 12;
+    TRISAInfo trisa_info = 16;
 }
 
 // Callback messages are from the CipherTrace TRISA node to the client on the
@@ -266,6 +272,8 @@ message Callback {
         // Contains a key-echange request (if in passthrough-mode)
         trisa.api.v1beta1.SigningKey key_exchange = 6;
     }
+
+    TRISAInfo trisa_info = 16;
 }
 
 
@@ -312,6 +320,13 @@ message Beneficiary {
         // Passthrough mode, otherwise the Traveler node will perform the cryptography
         // and respond on behalf of the client.
         trisa.api.v1beta1.SigningKey key_exchange = 8;
+
+        // If no response is required to the callback (e.g. in the case of the receipt
+        // of an asynchronous TRISA transfer) and there is no error response, the client
+        // should respond with an acknowledgement. Traveler will then echo the original
+        // secure envelope back to the beneficiary, pending clarifications from the
+        // TRISA working group what the correct behavior is.
+        bool acknowledgement = 10;
     }
 }
 
@@ -347,6 +362,26 @@ message Stream {
     // How traveler should handle multiple unique streams.
     MultiStream on_multiple_streams = 3;
 }
+
+// Contains TRISA-related information about a secure envelope transfer. This data is
+// returned both in transfer replies and incoming TRISA messages (Callbacks and
+// Concierge) to describe the TRISA envelope and allow for asynchronous exchanges and
+// TRISA-specific handling.
+message TRISAInfo {
+    string envelope_id = 1; // The secure envelope ID used in the transfer
+    VASP counterparty = 2;  // The counterparty to the transfer (could be either the originator or the beneficiary)
+    string timestamp = 16;  // The RFC3339 encoded timestamp when the message was last handled by Traveler
+}
+
+// Describes a VASP with enough information to look the VASP up in the TRISA Directory.
+message VASP {
+    string id = 1;                    // The directory ID for the VASP
+    string registered_directory = 2;  // The directory service that registered the VASP
+    string common_name = 3;           // The common name of the VASP on the certificate
+    string trisa_endpoint = 4;        // The TRISA endpoint the VASP uses to respond to TRISA requests
+    string name = 5;                  // If available, the VASP company name
+}
+
 
 // A request to retrieve all incoming transfers since the last concierge request.
 message ConciergeRequest {
@@ -395,9 +430,10 @@ message IncomingMessage {
     }
 
     // TRISA meta information
-    string received_at = 7;        // Timestamp the TRISA transaction was received
+    string received_at = 7;         // Timestamp the TRISA transaction was received
     bool confirmation_receipt = 8;  // If a confirmation receipt was sent to originator (otherwise an error was sent)
     bool response_required = 9;     // Is beneficiary information required from the Traveler client?
+    TRISAInfo trisa_info = 16;      // TRISA information related to the request
 }
 
 // Lookup one or more crypto addresses for CipherTrace identification of the VASP that
