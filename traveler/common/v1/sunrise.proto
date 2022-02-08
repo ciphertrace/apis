@@ -1,0 +1,56 @@
+// Copyright 2021 CipherTrace Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package ciphertrace.apis.traveler.common.v1;
+
+import "ivms101/identity.proto";
+import "trisa/api/v1beta1/api.proto";
+import "trisa/api/v1beta1/errors.proto";
+import "trisa/data/generic/v1beta1/transaction.proto";
+
+// A SunriseEnvelope is used to exchange compliance information with a beneficiary VASP
+// that has not yet been registered for the TRISA network. The envelope handles
+// compliance identity and transaction information on behalf of the Traveler client and
+// includes errors or rejections received by the non-TRISA VASP. Traveler will also
+// produce a TRISA secure envelope as an artifact for secure long term compliance storage.
+message SunriseEnvelope {
+    // The sunrise receipt ID returned by the Traveler node on transfer.
+    string receipt_id = 1;
+
+    // The identity payload should contain IVMS 101 KYC data from the sunrise beneficiary.
+    ivms101.IdentityPayload identity_payload = 3;
+
+    // The transaction payload should match the transaction information sent from the
+    // originator - e.g. should be a generic Transaction with chain-specific data to
+    // identify the transaction outside of Travel Rule compliance. It may be possible
+    // in the future for other types to be returned such as the confirmation receipt,
+    // so for extensibility, it is included here.
+    oneof transaction_payload {
+        trisa.data.generic.v1beta1.Transaction transaction = 4;
+        trisa.data.generic.v1beta1.ConfirmationReceipt confirmation_receipt = 5;
+    }
+
+    // Rejection or TRISA-specific error to be sent back from the beneficiary VASP.
+    // If an error is included the identity or transaction payloads are not required so
+    // may be empty depending on the type of response received.
+    trisa.api.v1beta1.Error error = 14;
+
+    // A partially secured TRISA artifact made available for long term storage and
+    // non-repudiation during compliance audits. The envelope contains a digital
+    // signature of the encrypted contents of the payload and is shared with the Sunrise
+    // VASP. The encryption key and hmac signature are not encrpyted in this payload.
+    trisa.api.v1beta1.SecureEnvelope envelope = 15;
+}

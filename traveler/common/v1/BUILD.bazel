@@ -6,6 +6,7 @@ proto_library(
         "address.proto",
         "errors.proto",
         "transaction.proto",
+        "sunrise.proto",
     ],
     visibility = ["//visibility:public"],
     deps = [
