@@ -19,6 +19,7 @@ package ciphertrace.apis.traveler.v1;
 import "google/protobuf/any.proto";
 import "traveler/common/v1/address.proto";
 import "traveler/common/v1/errors.proto";
+import "traveler/common/v1/sunrise.proto";
 import "traveler/common/v1/transaction.proto";
 import "trisa/api/v1beta1/api.proto";
 import "trisa/api/v1beta1/errors.proto";
@@ -224,7 +225,7 @@ message TransferReply {
     }
 
     // Traveler Handling Details and TRISA metadata
-    // NOTE: this message is deprecated, please use TRISAINfo instead.
+    // NOTE: this message is deprecated, please use TRISAInfo instead.
     message TRISAMeta {
         string envelope_id = 1;
         string vasp_id = 2;
@@ -271,6 +272,9 @@ message Callback {
 
         // Contains a key-echange request (if in passthrough-mode)
         trisa.api.v1beta1.SigningKey key_exchange = 6;
+
+        // Contains a sunrise reply (e.g. a non-TRISA compliance response from a beneficiary)
+        traveler.common.v1.SunriseEnvelope sunrise = 7;
     }
 
     TRISAInfo trisa_info = 16;
@@ -370,6 +374,14 @@ message Stream {
 message TRISAInfo {
     string envelope_id = 1; // The secure envelope ID used in the transfer
     VASP counterparty = 2;  // The counterparty to the transfer (could be either the originator or the beneficiary)
+
+    // Any TRISA error related to the request
+    // Note that the TRISA error may be on the SecureEnvelope, but it also may have been
+    // returned via the RPC call. There is currently a TRISA version amendment that will
+    // require all errors to be added to the SecureEnvelope. Traveler clients are
+    // guaranteed that they will receive any TRISA error if they refer to this field.
+    trisa.api.v1beta1.Error error = 15;
+
     string timestamp = 16;  // The RFC3339 encoded timestamp when the message was last handled by Traveler
 }
 
@@ -425,8 +437,11 @@ message IncomingMessage {
         // Contains a address confirmation request (proof-of-control)
         ConfirmAddressRequest address = 5;
 
-        // Contains a key-echange request (if in passthrough-mode)
+        // Contains a key-exchange request (if in passthrough-mode)
         trisa.api.v1beta1.SigningKey key_exchange = 6;
+
+        // Contains a sunrise reply (e.g. a non-TRISA compliance response from a beneficiary)
+        traveler.common.v1.SunriseEnvelope sunrise = 10;
     }
 
     // TRISA meta information

@@ -22,3 +22,14 @@ proto_library(
     strip_import_prefix = "trisacrypto",
     visibility = ["//visibility:public"],
 )
+
+proto_library(
+    name = "trisacrypto_trisa_ivms101_proto",
+    srcs = [
+        "trisacrypto/ivms101/enum.proto",
+        "trisacrypto/ivms101/identity.proto",
+        "trisacrypto/ivms101/ivms101.proto",
+    ],
+    strip_import_prefix = "trisacrypto",
+    visibility = ["//visibility:public"],
+)
