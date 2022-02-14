@@ -11,5 +11,6 @@ proto_library(
     visibility = ["//visibility:public"],
     deps = [
         "//:trisacrypto_trisa_api_v1beta1_proto",
+        "//:trisacrypto_trisa_ivms101_proto",
     ],
 )
