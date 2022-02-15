@@ -42,4 +42,7 @@ message CryptoAddress {
     string registered_directory = 12;
     string common_name = 13;
     string endpoint = 14;
+    
+    // Optional memo/destination-tag required by some ledgers to identify transactions
+    string memo = 15;          
 }

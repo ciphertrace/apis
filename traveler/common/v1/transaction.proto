@@ -23,6 +23,7 @@ message Transaction {
     double amount = 3;            // amount of the transaction
     string network = 4;           // the network of the transaction
     string asset_type = 5;        // the type of virtual asset being transfered
+    string tag = 6;               // optional memo/destination-tag required by some ledgers to identify transactions
 }
 
 // A confirmation receipt that is sent to remote originator VASP (a TRISA member) on
