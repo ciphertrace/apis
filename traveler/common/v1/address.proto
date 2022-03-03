@@ -44,5 +44,5 @@ message CryptoAddress {
     string endpoint = 14;
     
     // Optional memo/destination-tag required by some ledgers to identify transactions
-    string tag = 15;          
+    string memo = 15;          
 }
