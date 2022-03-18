@@ -20,9 +20,7 @@ message Transaction {
 }
 
 // A control flow message to support asynchronous TRISA transfers. Pending messages can
-// beneficiary response, e.g. in the case where the originator collects all the KYC
 // be returned as an intermediate response during a compliance transfer if further
-// information. This is a convienience message for sending generic responses.
 // processing is required before a response can be sent. The Pending message should
 // provide information to the originator about when they can expect a response via the
 // reply_not_before and reply_not_after timestamps. The Pending message should also
