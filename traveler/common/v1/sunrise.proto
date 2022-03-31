@@ -40,7 +40,11 @@ message SunriseEnvelope {
     // so for extensibility, it is included here.
     oneof transaction_payload {
         trisa.data.generic.v1beta1.Transaction transaction = 4;
-        trisa.data.generic.v1beta1.ConfirmationReceipt confirmation_receipt = 5;
+        
+        // NOTE: this field is deprecated, please use pending message instead.
+        trisa.data.generic.v1beta1.ConfirmationReceipt confirmation_receipt = 5 [deprecated = true];
+
+        trisa.data.generic.v1beta1.Pending pending_message = 6;
     }
 
     // Rejection or TRISA-specific error to be sent back from the beneficiary VASP.

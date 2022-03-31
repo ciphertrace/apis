@@ -17,14 +17,17 @@ syntax = "proto3";
 package ciphertrace.apis.traveler.v1;
 
 import "google/protobuf/any.proto";
-import "traveler/common/v1/address.proto";
-import "traveler/common/v1/errors.proto";
-import "traveler/common/v1/sunrise.proto";
-import "traveler/common/v1/transaction.proto";
+import "apis/traveler/common/v1/address.proto";
+import "apis/traveler/common/v1/errors.proto";
+import "apis/traveler/common/v1/sunrise.proto";
 import "trisa/api/v1beta1/api.proto";
 import "trisa/api/v1beta1/errors.proto";
 import "trisa/data/generic/v1beta1/transaction.proto";
 
+// FIXME: Sunrise proto is unused. This is a quick hack to make ESP configuration deploy
+// work properly since our current orchestration only supports one proto_descriptor. We
+// need to decouple the ESP config and proto_descriptor generation better.
+import "apis/traveler/sunrise/v1/api.proto";
 
 // The Traveler service implements a one-to-one API between a VASP customer and the
 // CipherTrace TRISA node, which acts as a single point of entry to the TRISA network on
@@ -195,6 +198,19 @@ message Information {
     // beneficiary information so that the beneficiary VASP can respond correctly. May
     // also include other fields such as source and amount.
     google.protobuf.Any transaction = 2;
+
+    // When responding to an asynchronous request e.g. via Concierge, if the client
+    // intends to reject the incoming message, they can send a TRISA error - the
+    // envelope ID field is required in this case. The error will be embedded in a
+    // SecureEnvelope and sent to the recipient using the routing information.
+    // NOTE: this field will never be set in a response from Traveler, it is for the
+    // user to send an error only. Check the TRISAInfo payload for any TRISA errors sent
+    // by the counterparty.
+    trisa.api.v1beta1.Error error = 3;
+
+    // The original secure envelope, unsealed. This envelope is provided by the Traveler
+    // node for non-repudiation purposes but ignored if set in a request by the user.
+    trisa.api.v1beta1.SecureEnvelope envelope = 15;
 }
 
 // The TransferReply returns the Transaction bundle for both the originator and the
@@ -221,7 +237,7 @@ message TransferReply {
         // Confirmation receipt from the Sunrise application if the request has been
         // stored for asynchronous delivery via a non-TRISA protocol. The Sunrise flag
         // will be set to true and no TRISA metadata will be available in this case.
-        traveler.common.v1.ConfirmationReceipt sunrise = 4;
+        trisa.data.generic.v1beta1.Pending sunrise = 5;
     }
 
     // Traveler Handling Details and TRISA metadata
@@ -242,6 +258,9 @@ message TransferReply {
     traveler.common.v1.CryptoAddress resolved_address = 11;
     bool forwarding_sunrise = 12;
     TRISAInfo trisa_info = 16;
+
+    // Deprecated from reply oneof: traveler.common.v1.ConfirmationReceipt sunrise
+    reserved 4;
 }
 
 // Callback messages are from the CipherTrace TRISA node to the client on the
@@ -446,7 +465,7 @@ message IncomingMessage {
 
     // TRISA meta information
     string received_at = 7;         // Timestamp the TRISA transaction was received
-    bool confirmation_receipt = 8;  // If a confirmation receipt was sent to originator (otherwise an error was sent)
+    bool confirmation_receipt = 8;  // If a pending was sent to originator (otherwise an error was sent)
     bool response_required = 9;     // Is beneficiary information required from the Traveler client?
     TRISAInfo trisa_info = 16;      // TRISA information related to the request
 }
