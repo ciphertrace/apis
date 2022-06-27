@@ -15,12 +15,12 @@
 syntax = "proto3";
 
 package ciphertrace.apis.traveler.v1;
-option go_package = "github.com/gingerballsinc/singularity/apis/traveler/v1;api";
+option go_package = "github.com/apis/traveler/v1;api";
 
 import "google/protobuf/any.proto";
-import "apis/traveler/common/v1/address.proto";
-import "apis/traveler/common/v1/errors.proto";
-import "apis/traveler/common/v1/sunrise.proto";
+import "traveler/common/v1/address.proto";
+import "traveler/common/v1/errors.proto";
+import "traveler/common/v1/sunrise.proto";
 import "trisa/api/v1beta1/api.proto";
 import "trisa/api/v1beta1/errors.proto";
 import "trisa/data/generic/v1beta1/transaction.proto";
@@ -28,7 +28,7 @@ import "trisa/data/generic/v1beta1/transaction.proto";
 // FIXME: Sunrise proto is unused. This is a quick hack to make ESP configuration deploy
 // work properly since our current orchestration only supports one proto_descriptor. We
 // need to decouple the ESP config and proto_descriptor generation better.
-import "apis/traveler/sunrise/v1/api.proto";
+import "traveler/sunrise/v1/api.proto";
 
 // The Traveler service implements a one-to-one API between a VASP customer and the
 // CipherTrace TRISA node, which acts as a single point of entry to the TRISA network on
