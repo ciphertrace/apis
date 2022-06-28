@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package ciphertrace.apis.traveler.sunrise.v1;
+option go_package = "github.com/gingerballsinc/singularity/apis/traveler/sunrise/v1;sunrise";
+
+import "apis/traveler/common/v1/sunrise.proto";
+
+
+// The Sunrise service allows Non-TRISA beneficiaries to access travel rule compliance
+// information sent from a Traveler client through the Sunrise application using the
+// stateful Traveler extension.
+service Sunrise {
+    // SunriseReply is used to send a transfer response back to the originator from
+    // a Sunrise VASP (e.g. a non-TRISA beneficiary) through the workbench UI. Because
+    // the Sunrise VASP is not a TRISA-member a completely signed envelope cannot be
+    // sent by the workbench UI; instead Traveler composes the partially signed envelope
+    // with TRISA cryptographic requirements and returns the completed partially
+    // encrypted envelope back to the user. It then signs and sends the response back to
+    // the originating VASP as a standard TRISA secure envelope using the originating
+    // VASP's signing keys.
+    rpc SunriseReply(traveler.common.v1.SunriseEnvelope) returns (traveler.common.v1.SunriseEnvelope);
+}
