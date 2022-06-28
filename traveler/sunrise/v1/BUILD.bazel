@@ -1,0 +1,29 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+proto_library(
+    name = "sunrise_proto",
+    srcs = ["api.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["//apis/traveler/common/v1:common_proto"],
+)
+
+go_proto_library(
+    name = "sunrise_go_proto",
+    compilers = [
+        "//apis:go_apiv2",
+        "//apis:go_grpc",
+    ],
+    importpath = "github.com/gingerballsinc/singularity/apis/traveler/sunrise/v1",
+    proto = ":sunrise_proto",
+    visibility = ["//visibility:public"],
+    deps = ["//apis/traveler/common/v1:common"],
+)
+
+go_library(
+    name = "sunrise",
+    embed = [":sunrise_go_proto"],
+    importpath = "github.com/gingerballsinc/singularity/apis/traveler/sunrise/v1",
+    visibility = ["//visibility:public"],
+)
