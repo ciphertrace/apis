@@ -49,7 +49,7 @@ const authData = JSON.parse(rawData);
 
 // Authentication with OAuth2 - get access token
 function getToken() {
-  const tokenpromise = axios.request({
+  return axios.request({
     method: 'POST',
     url: authData.token_uri,
     headers: {'content-type': 'application/x-www-form-urlencoded'},
@@ -60,7 +60,6 @@ function getToken() {
       'audience': authData.audience[0]
     })
   });
-  return tokenpromise;
 }
 
 // Get client to make gRPC calls
@@ -116,18 +115,15 @@ function getLookupAddresses() {
   return addresses;
 }
 
-function main() {
-  const tokenPromise = getToken();
-
-  tokenPromise.then(response => {
-    const accessToken = response.data.access_token;
-    const client = getClient(accessToken);
-
-    checkStatus(client);
-
-    const addresses = getLookupAddresses();
-    checkAddresses(client, addresses);
-  });
+async function main() {
+  const tokenResponse = await getToken();
+  const accessToken = tokenResponse.data.access_token;
+  const client = getClient(accessToken);
+  checkStatus(client);
+  const addresses = getLookupAddresses();
+  checkAddresses(client, addresses);
 }
 
-main();
+(async () => {
+  await main();
+})();
