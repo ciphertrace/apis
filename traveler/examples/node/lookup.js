@@ -124,4 +124,6 @@ async function main() {
   checkAddresses(client, addresses);
 }
 
-main();
+(async () => {
+  await main();
+})();
