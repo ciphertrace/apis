@@ -2,7 +2,8 @@
   "name": "ct-traveler-api-examples",
   "version": "0.1.0",
   "scripts": {
-    "lookup": "node -r dotenv/config lookup.js dotenv_config_path=../.env"
+    "lookup": "node -r dotenv/config lookup.js dotenv_config_path=../.env",
+    "transfer": "node -r dotenv/config transfer.js dotenv_config_path=../.env"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.1.0",
@@ -10,6 +11,7 @@
     "async": "^1.5.2",
     "axios": "^0.21.1",
     "client-oauth2": "^4.3.3",
+    "debug": "^4.3.4",
     "dotenv": "^8.6.0",
     "google-protobuf": "^3.0.0",
     "lodash": "^4.6.1",
