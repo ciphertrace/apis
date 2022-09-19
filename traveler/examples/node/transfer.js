@@ -30,11 +30,6 @@ const TRAVELER_PROTO_PATH = process.env.TRAVELER_PROTO_PATH || pathLib.join(ROOT
 const AUTH_DATA = '../credentials.json';
 const TRAVELER_ENDPOINT = process.env.TRAVELER_ENDPOINT || 'grpc.a639386.traveler.stage.cipheruse.com:443'; // CipherTrace Test
 
-// console.log(TRAVELER_PROTO_PATH);
-
-
-// grpc.a999999.traveler.ciphertrace.com:443
-
 // Load the protocol buffers dynamically
 const packageDefinition = protoLoader.loadSync(
   TRAVELER_PROTO_PATH,
