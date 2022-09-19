@@ -1,6 +1,6 @@
 {
   "name": "ct-traveler-api-examples",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "scripts": {
     "lookup": "node -r dotenv/config lookup.js dotenv_config_path=../.env",
     "transfer": "node -r dotenv/config transfer.js dotenv_config_path=../.env"
