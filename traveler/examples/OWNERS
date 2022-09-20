@@ -2,7 +2,7 @@ reviewers:
 - reviewers
 
 approvers:
-- owners
+- examples-owners
 
 labels:
-- sig/apis
+- sig/examples

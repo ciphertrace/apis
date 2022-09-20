@@ -3,8 +3,15 @@ aliases:
     - skymeyer
     - steegi
   reviewers:
+    - bransorem
+    - cchen408
+    - dwheeler
     - ezdeazy
     - peterbradford
-    - dwheeler
+    - raagaard
+    - skymeyer
+    - steegi
+  examples-owners:
     - bransorem
+    - cchen408
     - raagaard
