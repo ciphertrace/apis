@@ -7,4 +7,5 @@
 .idea/
 node_modules/
 credentials.json
+credentials* # so we can have credentials.stage.json or credentials.prod.json
 .env
