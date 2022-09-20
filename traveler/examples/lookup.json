@@ -1,0 +1,20 @@
+{
+    "addresses": [
+        {
+            "crypto_address": "LQcctH7yCV1qh97ktAHWHAbDHtc5hgCdAF",
+            "network": "ltc_wallet"
+        },
+        {
+            "crypto_address": "pzt7ezr9gpdph6n283j657fc4qscrdwx3c9hdpaldy",
+            "network": "bch_wallet"
+        },
+        {
+            "crypto_address": "17aaJMZqArjH3eufDaEJ3HZg74BJT7Gmgz",
+            "network": "bch_wallet"
+        },
+        {
+            "crypto_address": "bnb12wpk84anfltnwj9l7l9xazur4u70yxmdyj8glk",
+            "network": "bnb_wallet"
+        }
+    ]
+}
