@@ -26,7 +26,9 @@ import (
 
 func getConn(token oauth2.Token, endpoint string) (connection *grpc.ClientConn) {
 	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(credentials.NewTLS((&tls.Config{}))),
+		grpc.WithTransportCredentials(credentials.NewTLS((&tls.Config{
+			InsecureSkipVerify: true, // In production, you should add the necessary root CA's to your certificate store
+		}))),
 		grpc.WithPerRPCCredentials(oauth.NewOauthAccess(&token)),
 	}
 

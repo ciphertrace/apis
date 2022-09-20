@@ -146,7 +146,7 @@ func performTransfer(ctx context.Context, client api.TravelerClient) {
 func parseOptions() (ctx context.Context, travelerEndpoint, credentialFile string, doLookup, doTransfer bool) {
 	travelerEndpoint = os.Getenv("TRAVELER_ENDPOINT")
 	if travelerEndpoint == "" {
-		travelerEndpoint = "grpc.a639386.traveler.stage.cipheruse.com:443"
+		travelerEndpoint = "api.bob.vaspbot.net:443"
 	}
 
 	credentialFile = os.Getenv("AUTH_DATA")
@@ -156,6 +156,8 @@ func parseOptions() (ctx context.Context, travelerEndpoint, credentialFile strin
 
 	flag.BoolVar(&doLookup, "lookup", false, "Perform a lookup using the example data from ../lookup.json")
 	flag.BoolVar(&doTransfer, "transfer", false, "Initiate a transfer request using the example data from ../transfer.json")
+	flag.StringVar(&travelerEndpoint, "endpoint", travelerEndpoint, "Hostname and port of the traveler endpoint")
+	flag.StringVar(&credentialFile, "creds", credentialFile, "Location of the credential file")
 
 	flag.Parse()
 
