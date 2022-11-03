@@ -5,7 +5,7 @@ proto_library(
     srcs = ["pagination.proto"],
     visibility = ["//visibility:public"],
     deps = [
-        "//apis/traveler/v1:traveler_proto",
+        "//traveler/v1:traveler_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
 )
