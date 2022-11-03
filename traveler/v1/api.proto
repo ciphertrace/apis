@@ -284,7 +284,7 @@ message Callback {
         // Contains a address confirmation request (proof-of-control)
         ConfirmAddressRequest address = 5;
 
-        // Contains a key-echange request (if in passthrough-mode)
+        // Contains a key-exchange request (if in passthrough-mode)
         trisa.api.v1beta1.SigningKey key_exchange = 6;
 
         // Contains a sunrise reply (e.g. a non-TRISA compliance response from a beneficiary)
@@ -333,7 +333,7 @@ message Beneficiary {
         // request (proof-of-control) from a TRISA member VASP.
         trisa.api.v1beta1.AddressConfirmation address = 7;
 
-        // Unique to the Beneficary message; a response to a key exchange request from
+        // Unique to the Beneficiary message; a response to a key exchange request from
         // a TRISA member VASP. These messages will only be sent when the stream is in
         // Passthrough mode, otherwise the Traveler node will perform the cryptography
         // and respond on behalf of the client.
@@ -411,13 +411,18 @@ message VASP {
 
 // A request to retrieve all incoming transfers since the last concierge request.
 message ConciergeRequest {
-    int32 limit = 1;        // Maximum number of messages to download at a time; if negative - all messages are returned
+    // Limit is deprecated, please use page_size instead.
+    int32 limit = 1 [deprecated = true];
 
     bool archives = 2;      // Return archived transfers in addition to new transfers
     string since = 3;       // Return all transfers created after the specified date (RFC 3339 format)
     bool reverse = 4;       // Results are returned in time descending order (latest first), specify true to return in time ascending (earliest first)
 
     bool force_delete = 5;  // Ensure messages are deleted upon retrieval (otherwise will be archived)
+    string until = 6;       // Return all transfers created until the specified date (RFC 3339 format)
+
+    int32 page_size = 15;         // Number of results per page (default 100)
+    string next_page_token = 16;  // Specify the page token to fetch the next page of results
 }
 
 // All incoming transfers from remote originating VASPs that meet the requirements from
@@ -428,6 +433,10 @@ message ConciergeReply {
     // Number of messages archived vs deleted
     int32 archived = 2;
     int32 deleted = 3;
+
+    // If this field is not empty then there exists another page of results that should
+    // be fetched by a subsequent concierge request.
+    string next_page_token = 16;
 }
 
 message IncomingMessage {

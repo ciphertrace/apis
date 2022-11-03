@@ -1,0 +1,11 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "internal_proto",
+    srcs = ["pagination.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//traveler/v1:traveler_proto",
+        "@com_google_protobuf//:timestamp_proto",
+    ],
+)

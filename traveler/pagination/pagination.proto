@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package ciphertrace.apis.traveler.pagination;
+
+import "traveler/v1/api.proto";
+import "google/protobuf/timestamp.proto";
+
+// Implements a protocol buffer to serialize state managed pagination. This message
+// will be marshaled into a url-safe base64 encoded string and sent to the user as a
+// next_page_token. This message should not be documented or exposed to users.
+message ConciergePageCursor {
+    // References the current page information and expiration so that the next page
+    // can quickly be computed using the key-index cursor method. 
+    Cursor cursor = 1;
+
+    // The original query parameters are included to verify that the request hasn't
+    // changed between pagination iterations (otherwise InvalidArgument is returned).
+    traveler.v1.ConciergeRequest query = 2;
+}
+
+// Key-Index Cursors are useful for high-performance pagination that do not require
+// Postgres Cursors managed by an open transaction. The cursor specifies the current
+// page of results so that the next/previous pages can be calculated from the query.
+// Cursors also specify an expiration so that a page token cannot be replayed forever.
+// Note that Key-Index cursors require the original query to correctly order the index.
+message Cursor {
+    // The start index is the ID at the beginning of the page and is used for previous 
+    // page queries, whereas the end index is the last ID on the page and is used to
+    // compute the next page for the query.
+    string start_index = 1; 
+    string end_index = 2;
+
+    // The timestamp when the cursor is no longer valid.
+    google.protobuf.Timestamp expires = 3; 
+}
