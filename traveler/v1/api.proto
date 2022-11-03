@@ -416,10 +416,10 @@ message ConciergeRequest {
 
     bool archives = 2;      // Return archived transfers in addition to new transfers
     string since = 3;       // Return all transfers created after the specified date (RFC 3339 format)
-    string until = 6;       // Return all transfers created until the specified date (RFC 3339 format)
     bool reverse = 4;       // Results are returned in time descending order (latest first), specify true to return in time ascending (earliest first)
 
     bool force_delete = 5;  // Ensure messages are deleted upon retrieval (otherwise will be archived)
+    string until = 6;       // Return all transfers created until the specified date (RFC 3339 format)
 
     int32 page_size = 15;         // Number of results per page (default 100)
     string next_page_token = 16;  // Specify the page token to fetch the next page of results
