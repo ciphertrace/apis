@@ -132,7 +132,7 @@
             "@type": "type.googleapis.com/trisa.data.generic.v1beta1.Transaction",
             "txid": "",
             "originator": "1ASkqdo1hvydosVRvRv2j6eNnWpWLHucMX",
-            "beneficiary": "18nxAxBktHZDrMoJ3N2fk9imLX8xNnYbNh",
+            "beneficiary": "1Hzej6a2VG7C8iCAD5DAdN72cZH5THSMt9",
             "amount": 818.22,
             "network": "BTC",
             "assetType": "BTC",
