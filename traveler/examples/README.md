@@ -1,21 +1,23 @@
 # CipherTrace Traveler API Examples
 
 ## Getting Started
+
 ### Credentials
-These examples will need the staging credentials provided to your
-organization by your CipherTrace representative.
-They assume these credentials are stored in a
-_credentials.json_ file in the root of the examples directory.
+
+These examples will need the staging credentials provided to your organization by your CipherTrace representative.
+They assume these credentials are stored in a _credentials.json_ file in the root of the examples directory.
 
 > Note:
 > The contents of the credentials file is json and should contain elements such as "client_type", "client_secret" and "client_id"
 
 ### Configuration
-Secondly, these examples must be configured using the following environment
-variables:
+
+Secondly, these examples must be configured using the following environment variables:
+
 * ROOT_PROTO_PATH: Path to the root of the protocol buffer specifications needed by Traveler. (Node only)
 * TRAVELER_PROTO_PATH: Path to the Traveler protocol buffer specification. (Node only)
-* AUTH_DATA: Path to the _credentials.json_ file. (Defaults to looking for a credentials.json file in this directory)
+* AUTH_DATA: Path to the _credentials.json_ file. (Defaults to looking for a credentials.example.json file in this directory)
+  * > Note: You must update the `client_id` and `client_secret` with values that were provided to you
 * **TRAVELER_ENDPOINT**: Traveler endpoint provided to you by your CipherTrace representative. (This is **required** to be set to your traveler node endpoint)
 
 > Note:
@@ -26,7 +28,7 @@ variables:
 ## Node
 The node examples are provided under the `node` directory.
 
-### Prerequisites 
+### Prerequisites
 Node.js must be installed on your system, if you do not have Node.js please install it from here: https://nodejs.org or through your platform's package system.
 
 ### Environment
